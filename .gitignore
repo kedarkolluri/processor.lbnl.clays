@@ -2,3 +2,8 @@
 *~
 *.d
 *.o
+*.out
+*.a
+*.cproject
+*.project
+#*#
