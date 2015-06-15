@@ -1,0 +1,10 @@
+file orientation -X
+1 -1 0
+1 1 -2
+1 1 1
+//This is for the one I created
+
+1 1 -2
+-1 1 0
+1 1 1
+//the above is for KS1 of Michael
