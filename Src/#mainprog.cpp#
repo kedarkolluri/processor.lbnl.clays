@@ -36,6 +36,8 @@ bool WRITE_XYZ_FORMAT = false;
 bool PERFORM_DISRIGISTRY = false;
 bool ATOMIC_RESET = false;
 bool CONVERT_VESTA = false;
+bool MAKE_ILLITE = false;
+bool KEEP_GHOSTS = false;
 // this the disrigistry type; for now 1 means 2 files comparison
 // 2 means 1 inputfile and one reference vectors between 2 planes
 // 3 means 1 inputfile and 1 reference vector all round
@@ -2152,6 +2154,80 @@ int seq_process_lammps2()
 	return(0);
 }
 
+
+int seq_process_lammps_new()
+{
+	cout << "entered seq process new\n";
+	//exit(1);
+	if (filenumber_start<0) filenumber_start = 0;
+	if (filenumber_end<0) filenumber_end = 99999999;
+	if(filenumber_interval<=0) filenumber_interval = 10;
+
+	int n_check;
+	bool start = 0;
+	int counter=0;
+	atomic_dat *atom_ref;
+	double H_ref[3][3];
+
+	FILE *fptr;
+	FILE *fptr_interface;
+	fptr_interface = fopen("interface.energy","w");
+	fclose(fptr_interface);
+	for(int pp=filenumber_start;pp<=filenumber_end;pp+=filenumber_interval)
+	{
+		total_number_of_files++;
+		char filename[80]="dat.",str[80];
+		sprintf(str,"%d",pp);
+		strcat(filename,str);
+		int is_read = read_lammps_general(filename);
+		if(is_read==0)
+		{
+			double interface_pe[6][2];
+
+			// even though we are not doing CNA, neighbor lists and stuff is built here
+			compute_CNA_and_others(atom,n, Hcry);
+
+			fill_bonds_etc();
+
+			double total_energy = compute_interface_energy(atom,n,interface_pe);
+			double energy_difference = 0.0;
+			double energy_difference_full = 0.0;
+			double rdist = 0.0;
+			int number_1=0;
+			int number_2=0;
+			//temp_cout_neighbors(Hcry);
+			//	 find_data_for_rings( pp);
+
+			if((pp-filenumber_start)!=0)
+			{
+				energy_difference = compute_energy_difference( atom_ref, atom,n, 0.05, false,&number_1);
+				energy_difference_full = compute_energy_difference( atom_ref, atom,n, 0.0, true,&number_2);
+			}
+
+			if((pp-filenumber_start)==0)
+			{
+				atom_ref = (struct atomic_dat *) malloc((n+3)*sizeof(struct atomic_dat));
+				copy_atomstruct(atom, atom_ref,n);
+
+			}else
+			{
+				if(ATOMIC_RESET)
+				{
+					atomic_reset(atom,atom_ref,Hcry);
+				}
+			}
+
+			if(MAIN_SAVE_FULL) save_cfg(pp,Hcry);
+			if(MAIN_SAVE_LAMMPS) save_lammps(pp,Hcry);
+			if(SAVE_GULP) save_gulp(pp, Hcry);
+
+
+		}
+	}
+
+	return(0);
+}
+
 void analyze_neighbor_configs(int pp,atomic_dat *atom_now,atomic_dat *atom_ref,double H_now[3][3],double H_ref[3][3],int n_here)
 {
 	FILE *fptr,*fptr1,*fptr2,*fptr3;
@@ -2426,8 +2502,6 @@ void seq_process_and_more()
 }
 
 
-
-
 int trigger_MSD()
 {
 
@@ -2521,10 +2595,62 @@ int seq_convert_A_lammps(char *prefix)
 	return 0;
 }
 
+int test_distances(int argc, char *argv[])
+{
+	// TESTING END
+//	cout << "number of params is "<< argc<<"\n";
+//	for (int i =0; i<argc;i++)
+//	{
+//		cout << argv[i]<< "\n";
+//	}
+//	cout << "\n";
+	if(argc!=13) {cout << "not enough params; exiting\n"; exit(1);}
+	//cout << argv[0]<<"\n";
+	double rij[3],sij[3],htest[3][3],htestinv[3][3],testcrystal[6];
+	double r1[3],r2[3],s1[3],s2[3];
+
+	for(int i =0; i<3;i++)
+		for (int j = 0; j<3; j++)
+		{htest[i][j]=0.0; htestinv[i][j]=0.0;}
+
+	testcrystal[0]=atof(argv[1]); testcrystal[1]=atof(argv[2]); testcrystal[2]=atof(argv[3]);
+	testcrystal[3]=atof(argv[4])/180*PI; testcrystal[4]=atof(argv[5])/180*PI;
+	testcrystal[5]=atof(argv[6])/180*PI;
+	crystal_H(testcrystal,htest);
+	M3inv(htest,htestinv);
+
+//	r1[0] = 8.82604; r1[1] =13.6657; r1[2] = 40.0879;
+//	r2[0] = 12.8078; r2[1] = 13.6714; r2[2] = 0.00917919;
+	r1[0] = atof(argv[7]); r1[1] =atof(argv[8]); r1[2] = atof(argv[9]);
+	r2[0] = atof(argv[10]); r2[1] = atof(argv[11]); r2[2] = atof(argv[12]);
+
+
+
+	V3mulM3(r1,htestinv,s1);
+	V3mulM3(r2,htestinv,s2);
+	//cout << s1[0]<< " "<<s1[1]<<" "<<s1[2]<<"\n";
+	//cout << s2[0]<< " "<<s2[1]<<" "<<s2[2]<<"\n";
+
+	sij[0] = s1[0] - s2[0];
+	sij[1] = s1[1] - s2[1];
+	sij[2] = s1[2] - s2[2];
+	sij[0] = sij[0]-(int)(sij[0]*2);
+	sij[1] = sij[1]-(int)(sij[1]*2);
+	sij[2] = sij[2]-(int)(sij[2]*2);
+
+	V3mulM3(sij,htest,rij);
+	double rijsq = rij[0]*rij[0]+rij[1]*rij[1]+rij[2]*rij[2];
+	cout << sqrt(rijsq)<< " "<<rij[0]<<" "<<rij[1]<<" "<<rij[2]<< "\n";
+	exit(1);
+
+
+	// TESTING BEGIN
+}
 
 
 int main (int argc, char *argv[])
 {
+	//test_distances( argc,  argv);
 /*
 First change - input format needs to be changed
 */
@@ -2561,9 +2687,20 @@ First change - input format needs to be changed
 
 				}else
 				{
-					cout << "to convert, please give `filename` followed by name of the file\n";
+					cout << "to convert, please say `filename` and then follow with name of the file\n";
 
 					exit(1);
+				}
+
+				if(strcmp(argv[tt+1],"make_illite")==0)
+				{
+					MAKE_ILLITE = true;
+					tt=tt+1;
+					if(strcmp(argv[tt+1], "keep_ghosts")==0)
+					{
+						KEEP_GHOSTS = true;
+						tt=tt+1;
+					}
 				}
 
 			}else
@@ -2869,42 +3006,136 @@ First change - input format needs to be changed
 
 	if(CONVERT_VESTA)
 	{
+		//COMMAND TO RUN
+		//lbnl_processor_exec.out convert_VESTA filename small_3x_structure-Si2Al.xyz CUTOFF_FILE cutoff_file.illite SAVE_LAMMPS CHARGE MOLECULE
 
 		read_xyz_VESTA(inputfilename.c_str());
 		set_types_to_atom_from_element_name();
-		prepare_nbrlist(Hcry, 100);
-		coord_number(Hcry);
+		//prepare_nbrlist(Hcry, 100);
+		//coord_number(Hcry);
 
-		delete_duplicates();
-		cout << "after delete, the number of atoms are "<<n<<"\n";
-		//specifically for K, which is 7
-		// find the number of K ions
-		int total_K = 0;
-		for(int i=0;i<n;i++)
+		//delete_duplicates();
+
+		if(MAKE_ILLITE)
+		{
+			// THIS CODE USED TO CONVERT VESTA XYZ to LAMMPS
+			//***this commenting is done to use this block to process xyz files***
+			prepare_nbrlist(Hcry, 100);
+			coord_number(Hcry);
+
+			delete_duplicates();
+			cout << "after delete, the number of atoms are "<<n<<"\n";
+			//specifically for K, which is 7
+			// find the number of K ions
+			int total_K = 0;
+			for(int i=0;i<n;i++)
 			if(atom[i].type==7) total_K++;
 
-		// //change few of Ge atoms to Al randomly
-		// auto K_to_be_kept = change_atom_types(8, 4, 0.35);
 
-		//change few of Ge atoms to Al
-		//but min distance between 2 Al atoms is more than 4Angstorms
-		auto K_to_be_kept = change_atom_types_randomly(8, 4, 0.35, 3.5);
-		cout << total_K-K_to_be_kept<<" dfdf\n";
-		cout << "obtained ratio is \t"<< K_to_be_kept*1.0/(2*total_K)<<"\n";
-		// change the remaining atoms to Si
-		change_atom_types_randomly(8, 2, 1.0);
-		delete_atoms_randomly(7, total_K-K_to_be_kept, 4.0);
+			//change few of Ge atoms to Al
+			//but min distance between 2 Al atoms is more than 4Angstorms
+			int changed_ge_atoms=0;
+
+			//change 0.35 of type 10 atoms to type 4
+			//minimum distance between changed atoms is 5.0 Angstorms
+			//changed_ge_atoms = change_atom_types_randomly(10, 4, 0.35, 5.0);
+
+			changed_ge_atoms = change_atom_types_randomly(10, 4, 0.35, 5.0);
+
+			cout << total_K-changed_ge_atoms<<" Cations to remove\n";
+			if((total_K-changed_ge_atoms) < 0) {
+				cout << "more atoms to be removed than there are\n";
+				cout << "something is wrong\n";
+				cout <<"please check input data file...\n";
+				exit(1);
+			}
+
+			// delete `total_K-changed_ge_atoms` atoms (>1 means number) of type 7
+			// the minimum distance btween removed should be 5.0
+			// delete_atoms_randomly(7, total_K-changed_ge_atoms, 5.0);
+			if( !KEEP_GHOSTS )
+			{
+				delete_atoms_randomly(7, total_K-changed_ge_atoms, 0.0);
+
+			}else
+			{
+				change_atom_types_randomly(7, 11, total_K-changed_ge_atoms);
+			}
+
+
+			// change the remaining Ge atoms to Si
+			// Change 1.0 fraction of type 10 atoms to type 2 atoms
+			// change_atom_types_randomly(10, 2, 1.0);
+			change_atom_types_randomly(10, 2, 0.999999999);
+
+			prepare_nbrlist(Hcry, 100);
+
+			coord_number(Hcry);
+			//calling above method is necessary for below method to work
+			//Find atoms of type 5 bonded to atoms of type 4 and change their type to 9
+			change_bridging_oxygen(4, 5, 9) ;
+
+		}
+
 		prepare_nbrlist(Hcry, 100);
-
 		coord_number(Hcry);
-		//calling above method is necessary for below method to work
-		change_bridging_oxygen(4, 5, 10);
+		int number_of_K_atoms = 0;
 
+		int counter_K = 0;
+		for(int tag=0;tag<n;tag++)
+		{
+			if(atom[tag].type==7)
+			{
+				counter_K++;
+/*
+				double rij[3], sij[3];
+				if(atom[tag].sx>1.0) atom[tag].sx = atom[tag].sx-1;
+				if(atom[tag].sy>1.0) atom[tag].sy = atom[tag].sy-1;
+				if(atom[tag].sz>1.0) atom[tag].sz = atom[tag].sz-1;
+
+				if(atom[tag].sx<0.0) atom[tag].sx = 1.0+atom[tag].sx;
+				if(atom[tag].sy<0.0) atom[tag].sy = 1.0+atom[tag].sy;
+				if(atom[tag].sz<0.0) atom[tag].sz = 1.0+atom[tag].sz;
+
+				sij[0] = atom[tag].sx;
+				sij[1] = atom[tag].sy;
+				sij[2] = atom[tag].sz;
+				V3mulM3(sij,Hcry,rij);
+				cout << tag << " "<< rij[0]<<" "<<rij[1]<<" "<<rij[2]<<";\n";
+*/
+			}
+		}
+		cout << counter_K <<" the number of K+ atoms currently available\n";
+/*
+		int arry [3] = {291, 305, 309};
+		for(int i =0; i<3; i++)
+		{
+			int j = arry[i];
+			double rij[3], sij[3];
+
+			for(int k =0;k < atom[j].coord; k++ )
+			{
+				int l = atom[j].coord_id[k];
+				sij[0] = atom[l].sx - atom[j].sx;
+				sij[1] = atom[l].sy - atom[j].sy;
+				sij[2] = atom[l].sz - atom[j].sz;
+				sij[0] = sij[0]-(int)(sij[0]*2);
+				sij[1] = sij[1]-(int)(sij[1]*2);
+				sij[2] = sij[2]-(int)(sij[2]*2);
+
+				V3mulM3(sij,Hcry,rij);
+				double rijsq = rij[0]*rij[0]+rij[1]*rij[1]+rij[2]*rij[2];
+				cout << j << "\t"<< rij[0]<<"\t"<<rij[1]<<"\t"<<rij[2]<<" ***\n";
+			}
+		}
+*/
+
+		//do some `filling` of bonds -- add bonds
 		fill_bonds_etc();
 
 		// compute_neighbor_info(atom, n, Hcry);
 		// default to no zip
-		save_cfg(20,Hcry);
+//		save_cfg(20,Hcry);
 	 if(MAIN_SAVE_LAMMPS)
 		save_lammps(20,Hcry);
 
@@ -2951,7 +3182,8 @@ First change - input format needs to be changed
 
 	if(SEQ_PROCESS)
 	{
-		seq_process_lammps2();
+		std::cout << "Enetered into SEQ Process\n\n";
+		seq_process_lammps_new();
 	}
 
 
