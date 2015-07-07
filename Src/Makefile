@@ -13,7 +13,7 @@ INSTALLDIR = $(HOME)
 
 
 CC =		g++
-CCFLAGS =	-O -I./ -I$(HOME)/include/ -I/usr/local/include
+CCFLAGS =	-std=gnu++11 -O -I./ -I$(HOME)/include/ -I/usr/local/include
 DEPFLAGS =	-M
 LINK =		g++
 LINKFLAGS =	-O
