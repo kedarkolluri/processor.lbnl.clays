@@ -2156,12 +2156,12 @@ int seq_process_lammps2()
 	return(0);
 }
 
-void delete_ghosts()
+void delete_ghosts(int id)
 {
 	cout << "**********************************\n";
 	cout << "deleting ghost atoms....\n";
 	cout << "**********************************\n";
-	int delete_type = 11;
+	int delete_type = id;
 
 	std::vector<int> ghosts;
 	for(int i = 0; i < n; i++)
@@ -2289,7 +2289,8 @@ int seq_process_lammps_new()
 
 			// even though we are not doing CNA, neighbor lists and stuff is built here
 			cout << "processing file number "<< pp << "\n";
-			delete_ghosts();
+			delete_ghosts(11);
+			delete_ghosts(14);
 
 			compute_CNA_and_others(atom,n, Hcry, false);
 
