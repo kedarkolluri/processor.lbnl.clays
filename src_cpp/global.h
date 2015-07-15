@@ -18,6 +18,7 @@
 #include <vector>
 #include <set>
 #include <tuple>
+#include <map>
 //#include <typeinfo>
 //#include <structure.h>
 using namespace std;
@@ -44,50 +45,20 @@ using namespace std;
 extern int MAX_LOOP_VALUE;
 extern FILE *fptr;
 
-extern double ref_vectors[42][3];
-
-extern double H0[3][3],H0_inv[3][3],Hcry[3][3],Hcry_inv[3][3],H[3][3],H_inv[3][3];
-extern double crystal0[6];
-
-extern double **BVS;
-extern int VECTORS_ENUM;
-extern int PLANES_ENUM;
-
 enum{FCC,BCC,HCP,FCC_UNKNOWN,BCC_UNKNOWN,ICO,UNKNOWN, UNKNOWN_RING3,UNKNOWN_RING4,UNKNOWN_RING5,
 	UNKNOWN_RING6,UNKNOWN_RING7,UNKNOWN_RING8,UNKNOWN_RING9,UNKNOWN_RING10, UNKNOWN_RING11,
 	UNKNOWN_RING12,UNKNOWN_RING13,UNKNOWN_RING14,UNKNOWN_RING15};
 
 extern int *nbr_ptr,*nbr_ptr1,*nbr_lst,*map1,*map_full,*head,*list,mx,my,mz,ncell;
 
-extern double lx,ly,lz,xlo,ylo,zlo,xhi,yhi,zhi,xy,xz,yz;
-
-extern double rlst;
-extern double rlstsq;
-extern double **rcoordsq;
-
 extern int format,target_format;
+
 extern std::string inputfilename, outputfilename;
 
-extern int interface_atoms;
-extern int *tag_array_interface_atoms;
 extern int total_number_of_files;
 
-extern double *store_snapshots;
-extern double *rms_displacement;
+
 extern int filenumber_start,filenumber_end,filenumber_interval;
-
-
-extern int n;
-extern int n_types;
-extern double **latt_cutoff;
-extern double *element_weights;
-extern double *element_charges;
-//each array in the vector has 3 items (bond_type, atom_type_1, atom_type_2)
-extern std::vector<int> element_bonds;
-
-//each array in the vector has 3 items
-//(bond_type, atom_type_1, atom_type_2, atom_type_3)
-extern std::vector<int> element_angles;
 
 #ifndef MAX_ELEMS
 #define MAX_ELEMS    20
@@ -113,30 +84,55 @@ typedef struct atomic_dat_extra{
 };
 
 typedef struct atomic_dat {
-	double rx,ry,rz,vx,vy,vz,fx,fy,fz,ke,pe,sx,sy,sz,ux,uy,uz,charge;
+	double r[3], v[3], f[3], s[3], u[3], charge, ke, pe;
 	int type;
 	int molID;
-	double ma;
-	char elem[80];
-	int coord;
-	int coord_id[MAX_COORD];
-	int neigh_bonds[MAX_COORD];
-	atomic_dat_extra *localinfo;
 	atomic_dat()
 	{
 		molID = 1;
 	}
-	//store a `dummy` to use for throw-away cases
-	double dummy[3];
+	double ma; //this is actually redundant but helps if there are errors
+	char elem[80]; //this is redundant but helps if there are errors
+	int coord;
+	int coord_id[MAX_COORD];
+	int neigh_bonds[MAX_COORD];
+	std::vector<atomic_dat_extra> localinfo;
+
+ //store a vector called `data` that contains extra data
+ std::vector<double> data;
+ //store a vector of strings that contains the names of the data
+ std::vector<string> datanames;
 };
 
-extern atomic_dat *atom;
-extern std::vector<atomic_dat> atomvector;
-//each set of 3 values (type, id1, id2) in the vector correspond to a bond
-extern std::vector<int> bonds;
-//each set of 4 values (type, id1, id2, id2) in the vector correspond to an angle
-extern std::vector<int> angles;
+typedef struct simcell{
+	//simulation cell dimensions
+	double Hcry[3][3], Hinv[3][3], crystal[6];
+	double lx,ly,lz,xlo,ylo,zlo,xhi,yhi,zhi,xy,xz,yz;
+	//number of atoms in the simulation cell
+	double n;
+	//number of types of atoms in the simulation cell
+	int n_types;
+	double rlst = 4.0; //hard coded cut off value of rlist -- need to change according to need
+	double rlstsq = rlst*rlst;
+	std::map<std::tuple<int, int>, double> rcoordsq;
+	// we are using maps here so that element type numbers need not be consequtive
+	std::map< std::tuple<int, int>, double > latt_cutoff;
+	std::map<int, double> element_weights;
+	std::map<int, double> element_charges;
+	//each array in the vector has 3 items (bond_type, atom_type_1, atom_type_2)
+	std::tuple<int, int, int> element_bonds;
+	//(angle_type, atom_type_1, atom_type_2, atom_type_3)
+	std::tuple<int, int, int, int> element_angles;
 
+	//we are using map here so that atom ids need not be consequtive
+	std::map<int, atomic_dat> atomdata;
+	// bonds in the system - changed to tuples
+	std::tuple<int, int, int> bonds;
+	std::tuple<int, int, int, int> angles;
+	//arbitrary containers to take all other system parameters
+	std::vector<double> systemprops;
+	std::vector<string> systemprops_names;
+};
 extern bool TEST_BOOL;
 extern int MAX_COORDNUM;
 
