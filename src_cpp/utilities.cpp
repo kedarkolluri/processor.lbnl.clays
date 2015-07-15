@@ -229,15 +229,16 @@ double V3dot (double *a, double *b)
 	return dot_p;
 }
 
-double V3mulM3 (double a[3], double B[3][3], double c[3])
+void V3mulM3 (double a[3], double B[3][3], double c[3])
 {
 	c[0] = a[0]*B[0][0] + a[1]*B[1][0] + a[2]*B[2][0];
 	c[1] = a[0]*B[0][1] + a[1]*B[1][1] + a[2]*B[2][1];
 	c[2] = a[0]*B[0][2] + a[1]*B[1][2] + a[2]*B[2][2];
+
 }
 
 
-double M3mulV3(double A[3][3], double b[3], double c[3])
+void M3mulV3(double A[3][3], double b[3], double c[3])
 {
 	c[0] = A[0][0]*b[0] + A[0][1]*b[1] + A[0][2]*b[2];
 	c[1] = A[1][0]*b[0] + A[1][1]*b[1] + A[1][2]*b[2];

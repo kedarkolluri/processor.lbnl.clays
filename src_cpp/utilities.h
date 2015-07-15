@@ -38,11 +38,11 @@ void V3norm(double *B);
 
 double V3dot (double *a, double *b);
 
-double V3mulM3 (double a[3], double B[3][3], double c[3]);
+void V3mulM3 (double a[3], double B[3][3], double c[3]);
 
 void V3cross (double a[3], double b[3], double c[3]);
 
-double M3mulV3(double A[3][3], double b[3], double c[3]);
+void M3mulV3(double A[3][3], double b[3], double c[3]);
 
 double M3inv (double A[3][3], double B[3][3]);
 
