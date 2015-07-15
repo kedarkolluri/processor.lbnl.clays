@@ -4,7 +4,7 @@
  *  Created on: Jul 19, 2009
  *      Author: kedar
  */
-#include "Utilities.h"
+#include "utilities.h"
 #include "global.h"
 
 #include <stdio.h>
