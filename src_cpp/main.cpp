@@ -36,8 +36,9 @@ int main (int argc, char *argv[])
 					CONVERT_VESTA = true;
 
 					inputfilename = argv[tt+2];
-
+          std::cout << "filename is "<< inputfilename<<"\n";
 					tt = tt+2;
+          std::cout << argc<<" "<<tt<<"\n";
 
 				}else
 				{
@@ -45,23 +46,25 @@ int main (int argc, char *argv[])
 
 					exit(1);
 				}
-
-				if(strcmp(argv[tt+1],"make_illite")==0)
-				{
-					MAKE_ILLITE = true;
-					tt=tt+1;
-					if(strcmp(argv[tt+1], "keep_ghosts")==0)
-					{
-						KEEP_GHOSTS = true;
-						tt=tt+1;
-					}
-					if(strcmp(argv[tt+1], "increase_z")==0)
-					{
-						del_z = atof(argv[tt+2]);
-						cout << "********************del z value is "<<del_z<<"\n";
-						tt=tt+2;
-					}
-				}
+        if(tt+1< argc)
+        {
+          if(strcmp(argv[tt+1],"make_illite")==0)
+  				{
+  					MAKE_ILLITE = true;
+  					tt=tt+1;
+  					if(strcmp(argv[tt+1], "keep_ghosts")==0)
+  					{
+  						KEEP_GHOSTS = true;
+  						tt=tt+1;
+  					}
+  					if(strcmp(argv[tt+1], "increase_z")==0)
+  					{
+  						del_z = atof(argv[tt+2]);
+  						cout << "********************del z value is "<<del_z<<"\n";
+  						tt=tt+2;
+  					}
+  				}
+        }
 
 			}else
 			{
@@ -157,8 +160,12 @@ int main (int argc, char *argv[])
 
 	if(CONVERT_VESTA)
 	{
-      simcell illitecell = read_xyz_VESTA(inputfilename.c_str());
+    std::cout << "entered into vista stuff\n";
+    simcell mdcell = read_xyz_VESTA(inputfilename.c_str());
+    //std::cout << mdcell.n <<"\n";
+    std::cout << "exited 2\n";
   }
+  std::cout << "exited bro\n";
 /*
 		//read_xyz_VESTA(inputfilename.c_str());
 

@@ -8,7 +8,7 @@ EXE =	$(ROOT)_exec
 SRC =	$(wildcard *.cpp)
 INC =	$(wildcard *.h)
 OBJ = 	$(SRC:.cpp=.o)
-INSTALLDIR = ./
+INSTALLDIR = $(HOME)
 
 
 

@@ -9,27 +9,27 @@
 simcell read_xyz_VESTA(const char *filename1)
 {
 	FILE *fptr;
-	simcell illitecell;
-	illitecell.n = -1;
+	simcell mdcell;
+	mdcell.n = -1;
 	int num_val;
 
 	ifstream inputfile;
 	char filename[80]="";
 	strcat(filename, filename1);
 	string tmp_line;
-
+	std::cout << "filename "<< filename<<"\n";
 	unzip(filename);
 	inputfile.open(filename);
 	if(!(inputfile.good()))
 	{
 		cout << filename << " file open failed\n";
-		return(illitecell);
+		return(mdcell);
 	}else
 	{
 		bool read_coords = false;
 		std::string *ptr_tmp_line1;
 		ptr_tmp_line1 = get_next_splits(inputfile, num_val);
-		illitecell.n = atoi(ptr_tmp_line1[0].c_str());
+		mdcell.n = atoi(ptr_tmp_line1[0].c_str());
 		delete [] ptr_tmp_line1;
 		ptr_tmp_line1 = get_next_splits(inputfile, num_val);
 
@@ -41,46 +41,53 @@ simcell read_xyz_VESTA(const char *filename1)
 		crystal_data[4] = atof(ptr_tmp_line1[4].c_str())/180*PI;
 		crystal_data[5] = atof(ptr_tmp_line1[5].c_str())/180*PI;
 
+		delete [] ptr_tmp_line1;
+
 		for(int i=0;i<6; i++)
 		{
-			illitecell.crystal[i] = crystal_data[i];
+			mdcell.crystal[i] = crystal_data[i];
 		}
-		crystal_H(illitecell.crystal,illitecell.Hcry);
-		M3inv(illitecell.Hcry,illitecell.Hinv);
+		crystal_H(mdcell.crystal,mdcell.Hcry);
+		M3inv(mdcell.Hcry,mdcell.Hinv);
 
-		cout << "number of atoms are\t"<< illitecell.n <<"\n";
+		cout << "number of atoms are\t"<< mdcell.n <<"\n";
 		int tag = 0;
 		cout << "initalized the structure\n";
 		while(!inputfile.eof())
 		{
 			std::string *ptr_tmp_line;
 			ptr_tmp_line = get_next_splits(inputfile, num_val);
+
 			if(num_val>0)
 			{
 				atomic_dat atom;
+
 				for(int ih = 0; ih<3;ih++)
 				{
 					atom.r[ih] = atof(ptr_tmp_line[ih+1].c_str());
 					atom.u[ih] = atom.r[ih];
 				}
+
 				atom.type = 0;
 				atom.molID = 1;
+
 				strncpy(atom.elem, ptr_tmp_line[0].c_str(), sizeof(atom.elem));
 
-				V3mulM3(atom.r,illitecell.Hinv,atom.s);
+				V3mulM3(atom.r,mdcell.Hinv,atom.s);
 				for(int ih=0;ih<3;ih++)
 				{
 					if(atom.s[ih] >= 1.0 ) atom.s[ih] = atom.s[ih]-1.0;
 					if(atom.s[ih] <0.0 ) atom.s[ih] = atom.s[ih]+1.0;
 				}
-				illitecell.atomdata[tag] = atom;
+				mdcell.atomdata[tag] = atom;
 				tag++;
 			}
+			delete [] ptr_tmp_line;
 
 		}
-		cout << "final tag value "<<tag<<"\n";
 	}
 	inputfile.close();
+	return mdcell;
 }
 /*
 int read_lammps(char *filename)
