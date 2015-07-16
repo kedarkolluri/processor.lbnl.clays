@@ -51,7 +51,7 @@ simcell read_xyz_VESTA(const char *filename1)
 		M3inv(mdcell.Hcry,mdcell.Hinv);
 
 		cout << "number of atoms are\t"<< mdcell.n <<"\n";
-		int tag = 0;
+		int tag = 1;
 		cout << "initalized the structure\n";
 		while(!inputfile.eof())
 		{
