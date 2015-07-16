@@ -7,3 +7,5 @@
 *.cproject
 *.project
 #*.cpp#
+.cproject
+.project
