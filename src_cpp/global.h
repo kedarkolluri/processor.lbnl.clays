@@ -83,6 +83,7 @@ typedef struct atomic_dat_extra{
 	int BV;
 };
 
+
 typedef struct atomic_dat {
 	double r[3], v[3], f[3], s[3], u[3], charge, ke, pe;
 	int type;
@@ -104,31 +105,34 @@ typedef struct atomic_dat {
  std::vector<string> datanames;
 };
 
+typedef struct atom_types_info {
+	int n_types;
+	double rlst = 4.0; //defaults to 4.0
+	double rlstsq = rlst*rlst;
+	std::map<std::tuple<int, int>, double> rcoordsq;
+	// we are using maps here so that element type numbers need not be consequtive
+	std::map< int, double> latt_cutoff;
+	std::map<int, string> element_names;
+	std::map<int, double> element_weights;
+	std::map<int, double> element_charges;
+	//each array in the vector has 3 items (bond_type, atom_type_1, atom_type_2)
+	std::vector< std::tuple<int, int, int> > element_bonds;
+	//(angle_type, atom_type_1, atom_type_2, atom_type_3)
+	std::vector< std::tuple<int, int, int, int> > element_angles;
+};
+
 typedef struct simcell{
 	//simulation cell dimensions
 	double Hcry[3][3], Hinv[3][3], crystal[6];
 	double lx,ly,lz,xlo,ylo,zlo,xhi,yhi,zhi,xy,xz,yz;
 	//number of atoms in the simulation cell
 	double n;
-	//number of types of atoms in the simulation cell
-	int n_types;
-	double rlst = 4.0; //hard coded cut off value of rlist -- need to change according to need
-	double rlstsq = rlst*rlst;
-	std::map<std::tuple<int, int>, double> rcoordsq;
-	// we are using maps here so that element type numbers need not be consequtive
-	std::map< std::tuple<int, int>, double > latt_cutoff;
-	std::map<int, double> element_weights;
-	std::map<int, double> element_charges;
-	//each array in the vector has 3 items (bond_type, atom_type_1, atom_type_2)
-	std::tuple<int, int, int> element_bonds;
-	//(angle_type, atom_type_1, atom_type_2, atom_type_3)
-	std::tuple<int, int, int, int> element_angles;
-
 	//we are using map here so that atom ids need not be consequtive
 	std::map<int, atomic_dat> atomdata;
 	// bonds in the system - changed to tuples
 	std::tuple<int, int, int> bonds;
 	std::tuple<int, int, int, int> angles;
+	atom_types_info atoms_info;
 	//arbitrary containers to take all other system parameters
 	std::vector<double> systemprops;
 	std::vector<string> systemprops_names;
