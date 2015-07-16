@@ -126,13 +126,15 @@ typedef struct simcell{
 	double Hcry[3][3], Hinv[3][3], crystal[6];
 	double lx,ly,lz,xlo,ylo,zlo,xhi,yhi,zhi,xy,xz,yz;
 	//number of atoms in the simulation cell
-	double n;
+	int n;
+	atom_types_info atoms_info;
 	//we are using map here so that atom ids need not be consequtive
 	std::map<int, atomic_dat> atomdata;
-	// bonds in the system - changed to tuples
-	std::tuple<int, int, int> bonds;
-	std::tuple<int, int, int, int> angles;
-	atom_types_info atoms_info;
+	// bonds in the system - a vector of tuples
+	std::vector<std::tuple<int, int, int> > bonds;
+	//angles in the system - a vector of tuples
+	std::vector<std::tuple<int, int, int, int> > angles;
+
 	//arbitrary containers to take all other system parameters
 	std::vector<double> systemprops;
 	std::vector<string> systemprops_names;

@@ -9,8 +9,7 @@ bool MAKE_ILLITE = false;
 bool KEEP_GHOSTS = false;
 double del_z = 0.0;
 int random_seed = -1;
-bool LAMMPS_CHARGE = false;
-bool LAMMPS_MOLECULE = false;
+string cutoff_filename;
 
 
 
@@ -144,7 +143,9 @@ int main (int argc, char *argv[])
 		{
 			if(tt+1<argc)
 			{
+				cutoff_filename.assign(argv[tt+1]);
 				//set_neighbordistances(argv[tt+1]);
+
 				tt++;
 			}else
 			{
@@ -161,11 +162,17 @@ int main (int argc, char *argv[])
 	if(CONVERT_VESTA)
 	{
     std::cout << "entered into vista stuff\n";
+		auto info_of_atoms = set_atom_types_info(cutoff_filename.c_str());
+		std::cout << "filled info of atoms\n";
     simcell mdcell = read_xyz_VESTA(inputfilename.c_str());
-    //std::cout << mdcell.n <<"\n";
-    std::cout << "exited 2\n";
+		std::cout << "filled atoms\n";
+		mdcell.atoms_info =info_of_atoms;
+		std::cout <<"joined atoms_info to mdcell\n";
+		set_types_to_atom_from_element_name(mdcell);
+		std::cout <<"filled missing values in mdcell with cutofffile\n";
+		save_lammps(22, mdcell);
+		std::cout << "saved file in lammps format\n";
   }
-  std::cout << "exited bro\n";
 /*
 		//read_xyz_VESTA(inputfilename.c_str());
 
@@ -173,7 +180,6 @@ int main (int argc, char *argv[])
 		if(MAKE_ILLITE)
 		{
 			// THIS CODE USED TO CONVERT VESTA XYZ to LAMMPS
-			//***this commenting is done to use this block to process xyz files***
 			prepare_nbrlist(Hcry, 100);
 			coord_number(Hcry);
 

@@ -1,7 +1,26 @@
 #include <simulationparams.h>
 
+void set_types_to_atom_from_element_name(simcell &MDcell)
+{
+  // if there is no type in the atom struct
+  //assign "type" in atom struct to be the same as types from cutofffile
+  //by comparing element names
 
-atom_types_info set_atom_types_info(char *filename)
+	for(auto atomiter = MDcell.atomdata.begin(); atomiter != MDcell.atomdata.end(); ++atomiter)
+	{
+		for(auto mapiter = MDcell.atoms_info.element_names.begin(); mapiter != MDcell.atoms_info.element_names.end(); ++mapiter)
+		{
+			if(strcmp((atomiter->second).elem, (mapiter->second).c_str())==0)
+			{
+				(atomiter->second).ma = MDcell.atoms_info.element_weights[mapiter->first];
+				(atomiter->second).charge = MDcell.atoms_info.element_charges[mapiter->first];
+				if((atomiter->second).type==0) (atomiter->second).type = mapiter->first;
+			}
+		}
+	}
+}
+
+atom_types_info set_atom_types_info(const char *filename)
 {
 	ifstream cutoff_file;
 	string tmp_line;
