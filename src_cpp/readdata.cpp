@@ -24,6 +24,7 @@ simcell read_xyz_VESTA(const char *filename1)
 	{
 		cout << filename << " file open failed\n";
 		return(mdcell);
+
 	}else
 	{
 		bool read_coords = false;
@@ -89,10 +90,17 @@ simcell read_xyz_VESTA(const char *filename1)
 	inputfile.close();
 	return mdcell;
 }
+
+simcell read_lammps(const char *filename)
+{
+	simcell mdcell;
+
+}
 /*
-int read_lammps(char *filename)
+simcell read_lammps(const char *filename)
 {
 	FILE *fptr;
+	simcell mdcell;
 	int num_val;
 	ifstream inputfile;
 	string tmp_line;
